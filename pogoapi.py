@@ -1,10 +1,24 @@
 import requests
 import json
+from collections import defaultdict
 
 
 def get_json(path):
     data = requests.get("https://pogoapi.net/api/v1/" + path)
     return json.loads(data.text)
+
+
+class PokemonForms:
+    def __init__(self):
+        response = get_json("pokemon_types.json")
+        forms_by_id = defaultdict(list)
+        for item in response:
+            key = item["pokemon_id"]
+            forms_by_id[key].append(item)
+        self.forms_by_id = forms_by_id
+
+    def forms_for_id(self, id):
+        return [item["form"] for item in self.forms_by_id[id]]
 
 
 class BuddyDistance:
@@ -27,11 +41,11 @@ class Evolutions:
             evolutions_by_id[pokemon_id] = item["evolutions"]
         self.evolutions_by_id = evolutions_by_id
 
-    def how_to_evolve(self, pokemon_id):
+    def how_to_evolve(self, pokemon_id, form):
         response = []
         for key, evolutions in self.evolutions_by_id.items():
             for item in evolutions:
-                if item["pokemon_id"] == pokemon_id:
+                if item["pokemon_id"] == pokemon_id and item["form"] == form:
                     response += [(key, item)]
         return response
 
@@ -40,12 +54,13 @@ class Pokedex:
     def __init__(self):
         self.buddy_distance = BuddyDistance()
         self.evolutions = Evolutions()
+        self.pokemon_forms = PokemonForms()
 
-    def how_to_evolve(self, id):
-        return self.evolutions.how_to_evolve(id)
+    def how_to_evolve(self, id, form):
+        return self.evolutions.how_to_evolve(id, form)
 
-    def calculate_distance_to_evolve(self, id):
-        how_evolve = self.how_to_evolve(id)
+    def calculate_distance_to_evolve(self, id, form):
+        how_evolve = self.how_to_evolve(id, form)
         if not how_evolve:
             return None
         print(how_evolve)
