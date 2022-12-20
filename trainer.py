@@ -22,16 +22,26 @@ class Trainer:
         data = self.status_by_id[pokemon_id]
         status = data["status"]
         if status == '':
-            return True
+            return False
         if status == 'X':
             return True
+        if status == 'Caught':
+            return True
+        if status == 'Missing':
+            return False
         print("Unknown trainer status", pokemon_id, status)
         assert False
+
+    def normalize_status(self):
+        for data in self.status_by_id.values():
+            if data["status"] == "":
+                data["status"] = "Caught"
 
     def save(self, name):
         with open('trainer_data/' + name + '.csv', 'w', newline='') as csvfile:
             fieldnames = ['pokemon_id', 'form', 'candy_count', 'status']
             writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
             writer.writeheader()
+            self.normalize_status()
             for row in self.status_by_id.values():
                 writer.writerow({k: v for k, v in row.items() if k in fieldnames})
